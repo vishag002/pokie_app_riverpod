@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_demo_app2/controllers/home_screen_controller.dart';
 import 'package:riverpod_demo_app2/models/page_data.dart';
+import 'package:riverpod_demo_app2/widgets/pokemon_listtile.dart';
 
 final homeScreenControllerProvider =
     StateNotifierProvider<HomeScreenController, HomePageData>(
@@ -18,8 +19,30 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final ScrollController _allPokemonListScrollController = ScrollController();
   late HomeScreenController _homeScreenController;
   late HomePageData _homePageData;
+
+  @override
+  void initState() {
+    super.initState();
+    _allPokemonListScrollController.addListener(_scrollListener);
+  }
+
+  @override
+  void dispose() {
+    _allPokemonListScrollController.removeListener(_scrollListener);
+    _allPokemonListScrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_allPokemonListScrollController.offset >=
+            _allPokemonListScrollController.position.maxScrollExtent * 1 &&
+        !_allPokemonListScrollController.position.outOfRange) {
+      _homeScreenController.loadData();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,12 +77,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           SizedBox(
             height: MediaQuery.of(context).size.height * .60,
             child: ListView.builder(
+              controller: _allPokemonListScrollController,
               itemCount: _homePageData.data?.results?.length ?? 0,
               itemBuilder: (context, index) {
-                int i = index + 1;
-                return ListTile(
-                  title: Text(i.toString()),
-                );
+                return PokemonListTile(
+                    pokemonUrl: _homePageData.data?.results?[index].url ?? "");
               },
             ),
           )
